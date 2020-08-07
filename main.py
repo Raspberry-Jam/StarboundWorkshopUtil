@@ -78,12 +78,6 @@ def get_mod_name(file_path: str) -> str:
     return bytes(name_bytes).decode('ascii')
 
 
-def print_all_mod_names(mod_paths: List[str]) -> None:
-    for mod in mod_paths:
-        mod_name = get_mod_name(mod)
-        print(f'{mod_name}')
-
-
 def copy_and_rename_mods(game_dir: str, mod_paths: List[str]) -> None:
     mod_dir = os.path.join(game_dir, "mods")
     for mod in mod_paths:
