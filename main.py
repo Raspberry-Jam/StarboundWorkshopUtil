@@ -12,15 +12,16 @@ config = Config(f'{working_dir}{os.path.sep}config.json')
 # Enumerate all mod files (exclusively named contents.pak) in workshop content folder based on game installation path
 # This assumes that the game is installed in a standard steam library directory structure
 def enumerate_workshop_mods(game_dir: str) -> List[str]:
+    # Seek the workshop folder for Starbound using the provided install path, assuming that it is a standard Steam installation.
     content_path = f'{game_dir}{os.path.sep}..{os.path.sep}..{os.path.sep}workshop{os.path.sep}content{os.path.sep}211820'
     mods = []
-    for r, d, f in os.walk(content_path):
+    for r, d, f in os.walk(content_path):  # Enumerate all directories and files under the workshop mods path (non-recursive)
         for directory in d:
-            path = os.path.join(r, directory)
+            path = os.path.join(r, directory)  # Get the absolute path to the mod folder
             for rr, dd, ff in os.walk(path):
                 for name in ff:
-                    if name.endswith('.pak'):
-                        mods.append(f'{path}{os.path.sep}{name}')
+                    if name.endswith('.pak'):  # Filter all files ending in '.pak'
+                        mods.append(f'{path}{os.path.sep}{name}')  # Add absolute path of mod file
     return mods
 
 
