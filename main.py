@@ -78,6 +78,9 @@ def get_mod_name(file_path: str) -> str:
     return bytes(name_bytes).decode('ascii')
 
 
+# Using the game install path and provided paths for found workshop mods, get the mod names from the file metadata,
+# translate the mod name into a filesystem friendly string, and copy the mod files into the game's mods folder,
+# renaming the copies using the filesystem friendly names.
 def copy_and_rename_mods(game_dir: str, mod_paths: List[str]) -> None:
     mod_dir = os.path.join(game_dir, "mods")
     for mod in mod_paths:
