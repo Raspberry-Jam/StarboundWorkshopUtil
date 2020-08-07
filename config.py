@@ -26,13 +26,17 @@ blank_config = """{
 }"""
 
 
+# Create and validate config based on a pre-defined schema
 class Config:
+    # Get the path to the config.json, ensure it exists, load it using the json library, 
+    # validate it, and instantiate self.config using it.
     def __init__(self, config_path):
         self.__config_path = config_path
         self.__check_for_file()
         temp = json.load(open(self.__config_path))
         self.config = self.__validate_config(temp)
 
+    # Check if the file exists on disk, and if not, warn the user, create a new one and exit.
     def __check_for_file(self):
         if not os.path.isfile(self.__config_path):
             print("File doesn't exist. Creating a new empty config file now.")
@@ -42,6 +46,8 @@ class Config:
             config_file.close()
             exit(1)
 
+    # Ensure that rules defined by the pre-defined schema are followed by the loaded config file.
+    # If not, exit.
     def __validate_config(self, json_data):
         try:
             jsonschema.validate(instance=json_data, schema=schema)
