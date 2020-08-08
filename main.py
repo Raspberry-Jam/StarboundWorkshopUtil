@@ -1,12 +1,14 @@
 import os
 import shutil
+import argparse
 from config import Config
-from typing import List
+from typing import List, Tuple
 
 printable = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ '
 fs_printable = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-.()+@ '
 working_dir = os.path.dirname(os.path.realpath(__file__))
 config = Config(f'{working_dir}{os.path.sep}config.json')
+parser = argparse.ArgumentParser(description="Copy and rename Starbound mod files from Steam workshop installation locations to the Starbound/mods folder.")
 
 
 # Enumerate all mod files (exclusively named contents.pak) in workshop content folder based on game installation path
@@ -96,6 +98,28 @@ def copy_and_rename_mods(game_dir: str, mod_paths: List[str]) -> None:
         shutil.copyfile(mod, dest)
 
 
+def parse_args(parser: argparse.ArgumentParser) -> Tuple[str, str, str]:
+    parser.add_argument('-g', '--gamedir', action='store', dest='gamedir', type=str, help='Installation directory of Starbound from Steam. This will seek workshop and mods folder automatically.')
+    parser.add_argument('-m', '--moddir', action='store', dest='moddir', type=str, help='Destination mods folder of Starbound installation')
+    parser.add_argument('-w', '--workshop', action='store', dest='workshop', type=str, help='Steam Workshop directory for Starbound mods, including Starbound ID (/.../workshop/content/211820/)')
+    results = parser.parse_args()
+    gamedir, moddir, workshop = (v if os.path.exists(str(v)) else None for _, v in results.__dict__.items())
+    if gamedir is None:
+        if moddir is None or workshop is None:
+            print('Invalid argument usage! Workshop Utility requires either --gamedir or both --moddir and --workshop arguments. Use --help for more info.')
+            exit(1)
+    else:
+        if not os.path.exists(f'{gamedir}{os.path.sep}..{os.path.sep}..{os.path.sep}workshop{os.path.sep}content{os.path.sep}211820'):
+            print('Could not find a workshop folder in the expected location! Are you sure this is a valid Steam Starbound install directory? Use --help for more info.')
+            exit(1)
+        if not os.path.exists(f'{gamedir}{os.path.sep}mods'):
+            print('Could not find a mods folder in the expected location! Are you sure this is a valid Starbound install directory? Use --help for more info.')
+            exit(1)
+    return (gamedir, moddir, workshop)
+
+
 if __name__ == '__main__':
-    paths = enumerate_workshop_mods(config.config['game_dir'])
-    copy_and_rename_mods(config.config['game_dir'], paths)
+    game_dir, mod_dir, workshop_dir = parse_args(parser)
+    
+    #paths = enumerate_workshop_mods(config.config['game_dir'])
+    #copy_and_rename_mods(config.config['game_dir'], paths)
