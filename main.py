@@ -1,23 +1,18 @@
 import os
 import shutil
 import argparse
-from config import Config
 from typing import List, Tuple
 
 printable = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ '
 fs_printable = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-.()+@ '
 working_dir = os.path.dirname(os.path.realpath(__file__))
-config = Config(f'{working_dir}{os.path.sep}config.json')
 parser = argparse.ArgumentParser(description="Copy and rename Starbound mod files from Steam workshop installation locations to the Starbound/mods folder.")
 
 
-# Enumerate all mod files (exclusively named contents.pak) in workshop content folder based on game installation path
-# This assumes that the game is installed in a standard steam library directory structure
-def enumerate_workshop_mods(game_dir: str) -> List[str]:
-    # Seek the workshop folder for Starbound using the provided install path, assuming that it is a standard Steam installation.
-    content_path = f'{game_dir}{os.path.sep}..{os.path.sep}..{os.path.sep}workshop{os.path.sep}content{os.path.sep}211820'
+# Enumerate all mod files (exclusively named contents.pak) in workshop content folder
+def enumerate_workshop_mods(workshop_dir: str) -> List[str]:
     mods = []
-    for r, d, _ in os.walk(content_path):  # Enumerate all directories and files under the workshop mods path (non-recursive)
+    for r, d, _ in os.walk(workshop_dir):  # Enumerate all directories and files under the workshop mods path (non-recursive)
         for directory in d:
             path = os.path.join(r, directory)  # Get the absolute path to the mod folder
             for name in os.walk(path)[2]:  # Third index of os.walk() is a list of files found at the path
@@ -80,11 +75,10 @@ def get_mod_name(file_path: str) -> str:
     return bytes(name_bytes).decode('ascii')
 
 
-# Using the game install path and provided paths for found workshop mods, get the mod names from the file metadata,
+# Using the game's mods folder and provided paths for found workshop mods, get the mod names from the file metadata,
 # translate the mod name into a filesystem friendly string, and copy the mod files into the game's mods folder,
 # renaming the copies using the filesystem friendly names.
-def copy_and_rename_mods(game_dir: str, mod_paths: List[str]) -> None:
-    mod_dir = os.path.join(game_dir, "mods")
+def copy_and_rename_mods(mod_dir: str, mod_paths: List[str]) -> None:
     for mod in mod_paths:
         raw_name = get_mod_name(mod)
         dest = ''
@@ -103,23 +97,37 @@ def parse_args(parser: argparse.ArgumentParser) -> Tuple[str, str, str]:
     parser.add_argument('-m', '--moddir', action='store', dest='moddir', type=str, help='Destination mods folder of Starbound installation')
     parser.add_argument('-w', '--workshop', action='store', dest='workshop', type=str, help='Steam Workshop directory for Starbound mods, including Starbound ID (/.../workshop/content/211820/)')
     results = parser.parse_args()
-    gamedir, moddir, workshop = (v if os.path.exists(str(v)) else None for _, v in results.__dict__.items())
-    if gamedir is None:
-        if moddir is None or workshop is None:
+    game_dir, mod_dir, workshop = (v if os.path.exists(str(v)) else None for _, v in results.__dict__.items())
+    if game_dir is None:
+        if mod_dir is None or workshop is None:
             print('Invalid argument usage! Workshop Utility requires either --gamedir or both --moddir and --workshop arguments. Use --help for more info.')
             exit(1)
     else:
-        if not os.path.exists(f'{gamedir}{os.path.sep}..{os.path.sep}..{os.path.sep}workshop{os.path.sep}content{os.path.sep}211820'):
+        if not os.path.exists(f'{game_dir}{os.path.sep}..{os.path.sep}..{os.path.sep}workshop{os.path.sep}content{os.path.sep}211820'):
             print('Could not find a workshop folder in the expected location! Are you sure this is a valid Steam Starbound install directory? Use --help for more info.')
             exit(1)
-        if not os.path.exists(f'{gamedir}{os.path.sep}mods'):
+        if not os.path.exists(f'{game_dir}{os.path.sep}mods'):
             print('Could not find a mods folder in the expected location! Are you sure this is a valid Starbound install directory? Use --help for more info.')
             exit(1)
-    return (gamedir, moddir, workshop)
+    return (game_dir, mod_dir, workshop)
 
 
 if __name__ == '__main__':
     game_dir, mod_dir, workshop_dir = parse_args(parser)
-    
-    #paths = enumerate_workshop_mods(config.config['game_dir'])
-    #copy_and_rename_mods(config.config['game_dir'], paths)
+
+    if workshop_dir is None:
+        if game_dir is None:
+            print('This shouldn\'t be able to print. If so, both the game directory and the workshop directory are Null.')
+            exit(1)
+        else:
+            workshop_dir = f'{game_dir}{os.path.sep}..{os.path.sep}..{os.path.sep}workshop{os.path.sep}content{os.path.sep}211820'
+
+    if mod_dir is None:
+        if game_dir is None:
+            print('This shouldn\'t be able to print. If so, both the game directory and the workshop directory are Null.')
+            exit(1)
+        else:
+            mod_dir = f'{game_dir}{os.path.sep}mods'
+
+    paths = enumerate_workshop_mods(workshop_dir)
+    copy_and_rename_mods(mod_dir, paths)
