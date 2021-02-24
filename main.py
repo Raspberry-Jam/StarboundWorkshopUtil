@@ -15,9 +15,10 @@ def enumerate_workshop_mods(workshop_dir: str) -> List[str]:
     for r, d, _ in os.walk(workshop_dir):  # Enumerate all directories and files under the workshop mods path (non-recursive)
         for directory in d:
             path = os.path.join(r, directory)  # Get the absolute path to the mod folder
-            for name in os.walk(path)[2]:  # Third index of os.walk() is a list of files found at the path
-                if name.endswith('.pak'):  # Filter all files ending in '.pak'
-                    mods.append(f'{path}{os.path.sep}{name}')  # Add absolute path of mod file
+            for __, ___, filenames in os.walk(path):
+                for name in filenames:
+                    if name.endswith('.pak'):  # Filter all files ending in '.pak'
+                        mods.append(f'{path}{os.path.sep}{name}')  # Add absolute path of mod file
     return mods
 
 
